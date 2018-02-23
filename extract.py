@@ -1,43 +1,78 @@
 from PIL import Image
 import pytesseract
-
-img = Image.open("test4.png")
-
-
-# 二值化算法
-def binarizing(img, threshold):
-    pixdata = img.load()
-    w, h = img.size
-    for y in range(h):
-        for x in range(w):
-            if pixdata[x, y] < threshold:
-                pixdata[x, y] = 0
-            else:
-                pixdata[x, y] = 255
-    return img
-
-# Galaxy S8
-question_im = img.crop((0, 500, 1080, 700))
-ans0_im = img.crop((80, 1170, 1000, 1360))
-ans1_im = img.crop((80, 1412, 1000, 1600))
-ans2_im = img.crop((80, 1658, 1000, 1845))
-ans3_im = img.crop((80, 1900, 1000, 2085))
+import glob
 
 
-ans0_im = question_im.convert('L')
-ans0_im = binarizing(ans0_im, 190)
-ans0_im.show()
-ans = pytesseract.image_to_string(ans0_im, lang='chi_sim')
-ans = ans.replace("\n", "")
+# Chinese extraction
+def ocr(img):
+    def binarizing(threshold):
+        pixdata = img.load()
+        w, h = img.size
+        for y in range(h):
+            for x in range(w):
+                if pixdata[x, y] < threshold:
+                    pixdata[x, y] = 0
+                else:
+                    pixdata[x, y] = 255
+        return img
+    img = img.convert('L')
+    img = binarizing(190)
+    words = pytesseract.image_to_string(img, lang='chi_sim')
+    words = words.strip().replace("\n", "").replace("\t", "").replace(' ', '')
+    return words
 
-print(ans)
 
-# question = pytesseract.image_to_string(question_im, lang='chi_sim')
-# question = question.replace("\n", "")
-# print(question)
-#
-# for ans_im in (ans0_im, ans1_im, ans2_im, ans3_im):
-#     ans = pytesseract.image_to_string(ans_im, lang='chi_sim')
-#     ans = ans.replace("\n", "")
-#     print(ans)
+# Galaxy S8 conf
+que_left_up = (50, 500)
+que_right_down = (1030, 700)
+ans0_left_up = (80, 1170)
+ans1_left_up = (80, 1412)
+ans2_left_up = (80, 1660)
+ans3_left_up = (80, 1900)
+ans_sum = (ans0_left_up, ans1_left_up, ans2_left_up, ans3_left_up)
+ans_width = 920
+ans_height = 188
 
+dirc = {}
+
+theme = 'shishang'
+
+# read from current directory
+dataFile = open(theme + ".txt", "r+")
+for line in dataFile:
+    que, ans = line.split('\t')
+    dirc[que] = ans
+
+for filename in glob.glob(theme + '/*.png'):
+    print('-------------------------------')
+    img_org = Image.open(filename)
+    pix_data = img_org.load()
+    ans = -1  # index of correct ans (green)
+    for i, v in enumerate(ans_sum):
+        if pix_data[v] == (92, 204, 122):
+            ans = i
+            break
+
+    # not a valid screenshot
+    if ans == -1:
+        print('does not find an answer')
+        continue
+
+    question_im = img_org.crop((que_left_up[0], que_left_up[1], que_right_down[0], que_right_down[1]))
+    ans_img = img_org.crop(
+        (ans_sum[ans][0], ans_sum[ans][1], ans_sum[ans][0] + ans_width, ans_sum[ans][1] + ans_height))
+
+    que_new = ocr(question_im)
+    ans_new = ocr(ans_img)
+    if que_new == '' or ans_new == '':
+        continue
+    # print(que_new, ans_new)
+
+    if que_new in dirc:
+        print('**existing: ' + que_new + dirc[que_new])
+    else:
+        dirc[que_new] = ans_new
+        dataFile.write(que_new + '\t' + ans_new + '\n')
+        print('add: ' + que_new + '\t' + ans_new)
+
+dataFile.close()
