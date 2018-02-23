@@ -41,6 +41,7 @@ theme = 'shishang'
 # read from current directory
 dataFile = open(theme + ".txt", "r+")
 for line in dataFile:
+    line = line.replace('\n', '')
     que, ans = line.split('\t')
     dirc[que] = ans
 
