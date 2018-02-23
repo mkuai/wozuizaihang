@@ -2,6 +2,7 @@ import os
 from PIL import Image
 import pytesseract
 import time
+import random
 
 
 # Chinese extraction
@@ -55,6 +56,14 @@ while 1:
     print('question: ' + que_new)
     if que_new in dirc:
         print(dirc[que_new])
+        # auto tap
+        for ans in ans_sum:
+            ans_img = img_org.crop((ans[0], ans[1], ans[0] + ans_width, ans[1] + ans_height))
+            str_ans = ocr(ans_img)
+            if str_ans == dirc[que_new]:
+                os.system('adb shell input tap {x} {y}'.format(x=ans[0] + random.uniform(0, ans_width),
+                                                               y=ans[1] + random.uniform(0, ans_height)))
+                break
     elif que_new != '':
         print('XXXXX')
         time.sleep(4)
