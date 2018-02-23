@@ -35,7 +35,7 @@ ans_height = 188
 
 dirc = {}
 
-theme = 'shishang'
+theme = 'lishi'
 
 # read from current directory
 dataFile = open(theme + ".txt", "r+")
@@ -49,7 +49,7 @@ for filename in glob.glob(theme + '/*.png'):
     pix_data = img_org.load()
     ans = -1  # index of correct ans (green)
     for i, v in enumerate(ans_sum):
-        if pix_data[v] == (92, 204, 122):
+        if pix_data[v][1] == 204:
             ans = i
             break
 
@@ -66,7 +66,6 @@ for filename in glob.glob(theme + '/*.png'):
     ans_new = ocr(ans_img)
     if que_new == '' or ans_new == '':
         continue
-    # print(que_new, ans_new)
 
     if que_new in dirc:
         print('**existing: ' + que_new + dirc[que_new])
