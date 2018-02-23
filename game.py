@@ -45,8 +45,10 @@ for line in dataFile:
     que, ans = line.split('\t')
     dirc[que] = ans
 
+new_rec = 0
+
 while 1:
-    go = input('输入回车继续运行,输入 n 回车结束运行: ')
+    go = input('continue? ')
     if go == 'n':
         break
     os.system('adb shell screencap -p /sdcard/screenshot.png')
@@ -56,18 +58,21 @@ while 1:
     que_new = ocr(question_im)
     print('question: ' + que_new)
     if que_new in dirc:
+        # disable: taking time
+        # # auto tap
+        # for ans in ans_sum:
+        #     ans_img = img_org.crop((ans[0], ans[1], ans[0] + ans_width, ans[1] + ans_height))
+        #     str_ans = ocr(ans_img)
+        #     if str_ans == dirc[que_new]:
+        #         os.system('adb shell input tap {x} {y}'.format(x=ans[0] + random.uniform(0, ans_width),
+        #                                                        y=ans[1] + random.uniform(0, ans_height)))
+        #         break
         print(dirc[que_new])
-        # auto tap
-        for ans in ans_sum:
-            ans_img = img_org.crop((ans[0], ans[1], ans[0] + ans_width, ans[1] + ans_height))
-            str_ans = ocr(ans_img)
-            if str_ans == dirc[que_new]:
-                os.system('adb shell input tap {x} {y}'.format(x=ans[0] + random.uniform(0, ans_width),
-                                                               y=ans[1] + random.uniform(0, ans_height)))
-                break
     elif que_new != '':
         print('XXXXX')
-        time.sleep(4)
+        go = input('save this one? ')
+        if go == 'n':
+            continue
         os.system('adb shell screencap -p /sdcard/screenshot.png')
         os.system('adb pull /sdcard/screenshot.png .')
         img_org = Image.open('screenshot.png')
@@ -89,7 +94,9 @@ while 1:
         dirc[que_new] = ans_new
         dataFile.write(que_new + '\t' + ans_new + '\n')
         print('add: ' + que_new + '\t' + ans_new)
+        new_rec += 1
     else:
         print('XXXXX')
 
+print(str(new_rec) + ' new questions has been added')
 dataFile.close()
